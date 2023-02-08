@@ -4,8 +4,8 @@
 name: Python application
 
 on:
-  schedule:
-    - cron:  '*/10 * * * *'
+  #schedule:
+  #  - cron:  '*/10 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -29,8 +29,14 @@ jobs:
         pip install requests BeautifulSoup4
     #    if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: Run a Python script(karajibi
-      run: python karajibi.py
+    - name: Run a Python script(karajibi) and commit
+      run: |
+          python karajibi.py >> data.txt
+          git config user.name  "kiichigo"
+          git config user.email "kiichigo@yahoo.co.jp"
+          git add .
+          git commit -m "generated"
+          git push
 
     #- name: Lint with flake8
     #  run: |
