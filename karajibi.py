@@ -19,7 +19,15 @@ def toInt(s):
 
 
 def getNums():
-    res = requests.get("https://ssc3.doctorqube.com/karajibi/")
+    callnum = -1  # 呼出番号
+    waitnum = -1  # 待ち人数
+    waitmin = -1  # 次にお取りできる順番での目安待ち時間
+
+    try:
+        res = requests.get("https://ssc3.doctorqube.com/karajibi/")
+    except requests.exceptions.ConnectionError:
+        return (callnum, waitnum, waitmin)
+
     """
 [<re.Match object; span=(5, 26), match='<div id="smpcurrent">'>,
  <re.Match object; span=(26, 29), match='<p>'>,
@@ -51,9 +59,7 @@ def getNums():
  <re.Match object; span=(376, 380), match='<p>\u3000'>,
  <re.Match object; span=(380, 384), match='</p>'>]
 """
-    callnum = -1  # 呼出番号
-    waitnum = -1  # 待ち人数
-    waitmin = -1  # 次にお取りできる順番での目安待ち時間
+
 
     f_call = False
     f_waitnum = False
@@ -89,13 +95,18 @@ def writeFile(fn, newData):
         datas = []
     if not datas or datas[-1][1:] != newData[1:]:
         datas.append(newData)
-        json.dump(datas, open(fn, 'w'))
+        json.dump(datas, open(fn, 'w'), indent=1)
         return True
     return False
 
 
 def doit():
-    for i in range(6 * 60):
+    i_sec = 10  # interval sec
+    # loop num
+    n_min = int(60 / i_sec)
+    n_hour = n_min * 60
+    n_day = n_hour * 24
+    for i in range(n_day):
         callnum, waitnum, waitmin = getNums()
         ts = datetime.now().astimezone().isoformat()
         data = [ts, callnum, waitnum, waitmin]
