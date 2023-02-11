@@ -28,37 +28,7 @@ def getNums():
     except requests.exceptions.ConnectionError:
         return (callnum, waitnum, waitmin)
 
-    """
-[<re.Match object; span=(5, 26), match='<div id="smpcurrent">'>,
- <re.Match object; span=(26, 29), match='<p>'>,
- <re.Match object; span=(29, 32), match='<b>'>,
- <re.Match object; span=(32, 59), match='<font color="green">【午前の順番】'>,
- <re.Match object; span=(59, 66), match='</font>'>,
- <re.Match object; span=(66, 70), match='</b>'>,
- <re.Match object; span=(70, 74), match='</p>'>,
- <re.Match object; span=(74, 102), match='<p class="nowinfo waitlist">'>,
- <re.Match object; span=(102, 142), match='<p class="aroundline6 aroundnarrow">呼出番号'>,
- <re.Match object; span=(142, 149), match='</p>２３番'>,
- <re.Match object; span=(149, 156), match='</span>'>,
- <re.Match object; span=(156, 160), match='</p>'>,
- <re.Match object; span=(160, 188), match='<p class="nowinfo waitlist">'>,
- <re.Match object; span=(188, 228), match='<p class="aroundline6 aroundnarrow">待ち人数'>,
- <re.Match object; span=(228, 235), match='</p>１９人'>,
- <re.Match object; span=(235, 242), match='</span>'>,
- <re.Match object; span=(242, 246), match='</p>'>,
- <re.Match object; span=(246, 250), match='<p>\u3000'>,
- <re.Match object; span=(250, 254), match='</p>'>,
- <re.Match object; span=(254, 283), match='<p class="nowinfo">次にお取りできる番号'>,
- <re.Match object; span=(283, 307), match='<span>予定数に達したため受付を終了しました'>,
- <re.Match object; span=(307, 314), match='</span>'>,
- <re.Match object; span=(314, 318), match='</p>'>,
- <re.Match object; span=(318, 355), match='<p class="nowinfo">次にお取りできる順番での目安待ち時間'>,
- <re.Match object; span=(355, 364), match='<span>１０５'>,
- <re.Match object; span=(364, 372), match='</span>分'>,
- <re.Match object; span=(372, 376), match='</p>'>,
- <re.Match object; span=(376, 380), match='<p>\u3000'>,
- <re.Match object; span=(380, 384), match='</p>'>]
-"""
+
 
 
     f_call = False
@@ -87,6 +57,11 @@ def getNums():
     return (callnum, waitnum, waitmin)
 
 
+def jsondump(fn, datas):
+    txt = json.dumps(datas)
+    txt = txt.replace("],", "],\n")
+    open(fn, 'w').write(txt)
+
 def writeFile(fn, newData):
     datas = []
     if p.isfile(fn):
@@ -95,12 +70,21 @@ def writeFile(fn, newData):
         datas = []
     if not datas or datas[-1][1:] != newData[1:]:
         datas.append(newData)
-        json.dump(datas, open(fn, 'w'), indent=1)
+        #json.dump(datas, open(fn, 'w'), indent=1)
+        jsondump(fn, datas)
         return True
     return False
 
 
+def isoDateToTxt(d):
+    d = datetime.fromisoformat(d)
+    return d.astimezone().replace(tzinfo=None).isoformat(" ")
+
+
 def doit():
+    FN = "karajibi.json"
+    toCSV(FN)
+
     i_sec = 10  # interval sec
     # loop num
     n_min = int(60 / i_sec)
@@ -110,9 +94,19 @@ def doit():
         callnum, waitnum, waitmin = getNums()
         ts = datetime.now().astimezone().isoformat()
         data = [ts, callnum, waitnum, waitmin]
-        if writeFile("karajibi.json", data):
-            print(json.dumps(data))
+        if writeFile(FN, data):
+            #print(json.dumps(data))
+            data[0] = isoDateToTxt(data[0])
+            print("%s, %d, %d, %d" % tuple(data))
+
         time.sleep(10)
+
+
+def toCSV(fn):
+    datas = json.load(open(fn, 'r'))
+    for data in sorted(datas):
+        data[0] = isoDateToTxt(data[0])
+        print("%s, %d, %d, %d" % tuple(data))
 
 
 def main():
