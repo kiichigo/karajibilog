@@ -90,7 +90,7 @@ def doit():
     n_min = int(60 / i_sec)
     n_hour = n_min * 60
     n_day = n_hour * 24
-    for i in range(n_day):
+    for i in range(n_day * 30):
         callnum, waitnum, waitmin = getNums()
         ts = datetime.now().astimezone().isoformat()
         data = [ts, callnum, waitnum, waitmin]
